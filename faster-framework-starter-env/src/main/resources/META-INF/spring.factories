@@ -1,0 +1,5 @@
+org.springframework.boot.env.EnvironmentPostProcessor=\
+faster.framework.starter.env.DefaultPropertyEnvironmentPostProcessor,\
+faster.framework.starter.env.ConditionValueEnvironmentPostProcessor
+org.springframework.context.ApplicationListener=\
+faster.framework.starter.env.DefaultPropertyEnvironmentPostProcessor

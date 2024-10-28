@@ -49,6 +49,9 @@ public class Faster {
         properties.list(System.out);
 
         String ideMode = System.getProperty("intellij.debug.agent");
+        ApplicationHome applicationHome0 = new ApplicationHome(ApplicationHome.class);
+        System.out.println(applicationHome0.getDir());
+
         ApplicationHome applicationHome = new ApplicationHome(Faster.class);
         ApplicationPid applicationPid = new ApplicationPid();
 
@@ -98,10 +101,10 @@ public class Faster {
     public static class TraceId {
         public static final String x_trace_id = "x-trace-id";
         private static final String disable_value = "-1";
-        private static final TransmittableThreadLocal<String> THREAD_LOCAL = new TransmittableThreadLocal<>();
+        private static final TransmittableThreadLocal<String> LOCAL = new TransmittableThreadLocal<>();
 
         public static String get() {
-            return THREAD_LOCAL.get();
+            return LOCAL.get();
         }
 
         public static String getOr(String defaultVale) {
@@ -121,27 +124,27 @@ public class Faster {
         }
 
         public static String reset() {
-            THREAD_LOCAL.set(Id.nextIdStr());
-            return THREAD_LOCAL.get();
+            LOCAL.set(Id.nextIdStr());
+            return LOCAL.get();
         }
 
         public static String reset(String traceId) {
             if (StrUtil.isNotBlank(traceId)) {
-                THREAD_LOCAL.set(traceId);
+                LOCAL.set(traceId);
                 return traceId;
             }
             return reset();
         }
 
         public static void set(String traceId) {
-            THREAD_LOCAL.set(traceId);
+            LOCAL.set(traceId);
         }
 
         /**
          * 禁止输出和收集日志
          */
         public static void disable() {
-            THREAD_LOCAL.set(disable_value);
+            LOCAL.set(disable_value);
         }
 
         public static boolean isDisable() {
@@ -424,6 +427,96 @@ public class Faster {
     }
 
     /**
+     * 缓存功能
+     *
+     * @author lizhian
+     */
+    public static class Redisson {
+
+    }
+
+
+    /**
+     * 缓存功能
+     *
+     * @author lizhian
+     */
+    public static class Cache {
+        /**
+         * 新建对象缓存
+         */
+        public static <T> CacheContainerBuilder<T> newCache(Class<T> clazz) {
+            boolean autoType = clazz.isInterface() || Modifier.isAbstract(clazz.getModifiers());
+            return newCache(clazz, autoType);
+        }
+
+        /**
+         * 新建对象缓存
+         */
+        public static <T> CacheContainerBuilder<T> newCache(Class<T> clazz, boolean typed) {
+            return new CacheContainerBuilder<T>()
+                    .timeToLiveForever()
+                    .disableLocalCache()
+                    .nullValueCacheable(false)
+                    .codec(new JsonCodec<>(clazz, typed))
+                    .mappingIfAbsent(null);
+        }
+
+        /**
+         * 新建对象缓存
+         */
+        public static <T> CacheContainerBuilder<T> newCache(TypeReference<T> typeReference) {
+            return newCache(typeReference, false);
+        }
+
+        /**
+         * 新建对象缓存
+         */
+        public static <T> CacheContainerBuilder<T> newCache(TypeReference<T> typeReference, boolean typed) {
+            return new CacheContainerBuilder<T>()
+                    .timeToLiveForever()
+                    .disableLocalCache()
+                    .nullValueCacheable(false)
+                    .codec(new JsonCodec<>(typeReference, typed))
+                    .mappingIfAbsent(null);
+        }
+
+        /**
+         * 新建字符串缓存
+         */
+        public static CacheContainerBuilder<String> newStringCache() {
+            return newStringCache(false);
+        }
+
+        /**
+         * 新建字符串缓存
+         */
+        public static CacheContainerBuilder<String> newStringCache(boolean gzip) {
+            return new CacheContainerBuilder<String>()
+                    .timeToLiveForever()
+                    .disableLocalCache()
+                    .nullValueCacheable(false)
+                    .codec(gzip ? StringGzipCodec.UTF_8 : StringCodec.UTF_8)
+                    .mappingIfAbsent(null);
+
+        }
+
+        /**
+         * 新建字节缓存
+         */
+        public static CacheContainerBuilder<byte[]> newBytesCache() {
+            return new CacheContainerBuilder<byte[]>()
+                    .timeToLiveForever()
+                    .disableLocalCache()
+                    .nullValueCacheable(false)
+                    .codec(BytesCodec.INSTANCE)
+                    .mappingIfAbsent(null);
+        }
+
+    }
+
+
+    /**
      * 权限功能
      */
     public static final class Auth {
@@ -545,86 +638,6 @@ public class Faster {
     }
 
     /**
-     * 缓存功能
-     *
-     * @author lizhian
-     * @date 2023年11月21日
-     */
-    public static class Cache {
-        /**
-         * 新建对象缓存
-         */
-        public static <T> CacheContainerBuilder<T> newCache(Class<T> clazz) {
-            boolean autoType = clazz.isInterface() || Modifier.isAbstract(clazz.getModifiers());
-            return newCache(clazz, autoType);
-        }
-
-        /**
-         * 新建对象缓存
-         */
-        public static <T> CacheContainerBuilder<T> newCache(Class<T> clazz, boolean typed) {
-            return new CacheContainerBuilder<T>()
-                    .timeToLiveForever()
-                    .disableLocalCache()
-                    .nullValueCacheable(false)
-                    .codec(new JsonCodec<>(clazz, typed))
-                    .mappingIfAbsent(null);
-        }
-
-        /**
-         * 新建对象缓存
-         */
-        public static <T> CacheContainerBuilder<T> newCache(TypeReference<T> typeReference) {
-            return newCache(typeReference, false);
-        }
-
-        /**
-         * 新建对象缓存
-         */
-        public static <T> CacheContainerBuilder<T> newCache(TypeReference<T> typeReference, boolean typed) {
-            return new CacheContainerBuilder<T>()
-                    .timeToLiveForever()
-                    .disableLocalCache()
-                    .nullValueCacheable(false)
-                    .codec(new JsonCodec<>(typeReference, typed))
-                    .mappingIfAbsent(null);
-        }
-
-        /**
-         * 新建字符串缓存
-         */
-        public static CacheContainerBuilder<String> newStringCache() {
-            return newStringCache(false);
-        }
-
-        /**
-         * 新建字符串缓存
-         */
-        public static CacheContainerBuilder<String> newStringCache(boolean gzip) {
-            return new CacheContainerBuilder<String>()
-                    .timeToLiveForever()
-                    .disableLocalCache()
-                    .nullValueCacheable(false)
-                    .codec(gzip ? StringGzipCodec.UTF_8 : StringCodec.UTF_8)
-                    .mappingIfAbsent(null);
-
-        }
-
-        /**
-         * 新建字节缓存
-         */
-        public static CacheContainerBuilder<byte[]> newBytesCache() {
-            return new CacheContainerBuilder<byte[]>()
-                    .timeToLiveForever()
-                    .disableLocalCache()
-                    .nullValueCacheable(false)
-                    .codec(BytesCodec.INSTANCE)
-                    .mappingIfAbsent(null);
-        }
-
-    }
-
-    /**
      * 消息队列
      */
     public static class Message {
@@ -737,6 +750,13 @@ public class Faster {
      * 服务发现
      */
     public static class Discovery {
+
+    }
+
+    /**
+     * 服务发现
+     */
+    public static class RunningTime {
 
     }
 }
